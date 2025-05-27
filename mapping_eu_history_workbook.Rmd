@@ -1,0 +1,124 @@
+---
+title: "mapping_eu_history_workbook"
+author: "Rasmus Stengaard Hansen"
+date: "2025-05-27"
+output: html_document
+---
+Welcome to the Mapping EU History workshop! This RMarkdown workshop focuses on using the R Leaflet package to demonstrate development and uses of interactive maps, with the growth of the EU as the example setting. Here you will learn how to create interactive maps in R, as well as how to combine it with data to make informative popups.
+
+In today's workshop, we will use the tidyverse, leaflet and htmlwidgets packages. More information on the packages can be found here: <br>
+Tidyverse:  https://CRAN.R-project.org/package=tidyverse <br>
+Leaflet: https://CRAN.R-project.org/package=leaflet <br>
+HTMLWidgets: https://CRAN.R-project.org/package=htmlwidgets <br>
+
+
+Package setup 
+
+```{r}
+
+
+
+```
+
+Now that the appropriate packages have been installed and activated we can move on to retrieve the data needed to create the popups for the map. In the case of this project the dataset is handmade. Accession year data has been gathered from the European Commission (https://enlargement.ec.europa.eu/enlargement-policy/6-27-members_en), geographic data from Google Maps (https://www.google.com/maps) and referendum voting data from the book *Elections in Europe: A Data Handbook* by Dieter Nohlen and Philip Stöver (Nomos, 2010), except voting data on Croatia which has been gathered from European Data (https://data.europa.eu/data/datasets/rezultati-referenduma?locale=en).
+
+To load the data into our R environment, we will use the the 'read.csv' function. This will fetch the comma separated values sheet and load it into R as a dataframe which we can then begin working with. The CSV file we will be working with can be fetched from a public github repository, which we will link to in our 'read.csv' function.
+
+```{r}
+
+
+
+```
+
+With the data loaded into R as a dataframe, we can now take the first steps towards creating a map using leaflet. To begin with we will dictate what visual style we want the map to appear in with 'addproviderTiles'. Additionally we will also set the location and zoom level we want the map to render with, in this case we want it to show all countries included in the EU. The code we make here will act as a base, which we will gradually add onto with more details until we have a satisfactory result.
+
+After creating the map, try calling upon it by typing the name you assigned to it to see if everything looks as it should.
+
+```{r}
+
+
+
+```
+
+If everything looks correct with the map base, we can now move onto the popups. Before we start attempting to add popups for all the countries in the dataset, let us make a pilot attempt using just one country. The function used to add popups to leaflet is called 'addAwesomeMakers'. Within this function we will specify what data we want the popup to use. This is of course the 'eu_data' dataframe, but we only want to use the Denmark row of the dataframe. This is done with the 'data = filter' specification where we will sort out every row except Denmark. 
+
+To dictate the geographic location of the popup, we tell the function to use the lng and lat values of this row, and lastly we will choose the popup info. Right now we only want the name of the country to appear, so we will type 'popup = "Denmark"'. 
+
+After making these additions, try calling on the map once again to see if all changes were implemented correctly.
+
+```{r}
+
+
+    
+```
+
+You should now see the map rendered with a singular popup appearing on top of Denmark. If you click it, it should expand and the name of the popup will appear. Now we will alter the code we just made to include all the rows of the eu_data dataframe. This is done by removing the filter and instead designating 'data = eu_data'.
+
+Since we are now using all rows of the dataframe, we want the popup info to be fetched and pasted directly from the dataframe instead of typing it in manually. Therefore we will use 'popup = ~paste0()' where we can choose what columns of the dataframe we want to be pasted onto the popups. To begin with, we only want the 'country' column. 
+
+Once again we will call onto the map to see if all the changes appear as intended. We should see something similar to before, now with all countries of the dataset having a poup instead of only Denmark. 
+
+```{r}
+
+
+
+```
+
+We are starting to get somewhere! All the countries now appear as popups on the map, but sadly it is not very informative yet. To add additional info we will ask the 'popup = ~paste0()' specification to include more columns than just the name of the countries. The formula for adding popup information looks like this:
+
+"Info name", dataframe column, "<br>"
+
+The "info name" is what we want the information to be called, "dataframe column" dictates which column the data is fetched from and "<br>" creates a line break so the different informations appear on their own row in the popup. Lets try modifying our code to include, country name, year of accession and accession type. Once we have done this, we can again call on the map to see if everything looks correct.
+
+```{r}
+
+
+
+```
+
+As everything looks great the next step will be to integrate the referendum election data with the popups. Again, this is done within the 'popup = ~paste0()' specification. 
+
+However, since only countries which held referendums to join the EU have this data we need to put up some restrictions on this pasting. We want voting data to only be displayed in popups where the 'accession_type' value equals "Referendum". This is done by using the 'ifelse' specification. Within this we will specify that the 'ref_result_yes' and 'ref_result_no' column values will only be displayed if 'accession_type == "Referendum"'.
+
+We do also need to tell the code what to display if 'accession_type' does not equal "Referendum". If this is the case, we want nothing to be displayed so we will type in a pair of empty quotation marks, "".
+
+As usually, we will call upon the map again to see if everything works as intended before we move on.
+
+```{r}
+
+
+
+```
+
+Now we have a map that shows both how and when all EU countries joined and most importantly, the referendum results in cases where a country joined by referendum. The election data does lack some clarity though, having a percentage amount of yes and no votes would make it much easier to get a hold of the results at first glance. 
+
+To change this, we first need to make the calculation and this is easiest done within the dataframe. Luckily it already contains all the data we need to calculate percentage of votes: Amount of yes votes, amount of no votes and amount of total votes. To make the calculation in the dataframe we will call on the mutate function within the dataframe. This function operates using arithmetic notation known from math. We just need to name the new column we want and dictate what what variables it should calculate. For example:
+
+yes_percentage = ref_result_yes / total_votes * 100
+
+This would give us a percentage result of yes votes in any given referendum, however for the sake of clarity we only want 2 decimal points, so we will ask the code to round the results like this.
+
+yes_percentage = round(ref_result_yes / total_votes * 100, 2)
+
+Try mutating the dataframe to add a column for percentage of votes on yes and a column for percentage of votes and no. After doing so, check the dataframe in the environment and see if everything looks correct.
+
+```{r}
+
+
+
+``` 
+
+Once we have added the columns with referendum results in percentages, we will use these in our ifelse(paste0()) function instead of the columns with the amount of votes. After making this alteration we will run the map one last time to see if everything looks as it intended. You should now see the map rendered zoomed in on the European continent, with popup pins placed on all current or former EU countries. When clicked, the popups should include country name, year and method of accession and if accession was done by referendum, voting data as well.
+
+```{r}
+
+
+
+```
+
+Congratulaions on making your first map in R using leaflet! Today you have learned: <br> 
+- How to decide the map render location <br>
+- How to add popups to it using longitude and latitude coordinates <br>
+- How to paste data into popups, both constant and conditional <br>
+- How to mutate data to better suit your purposes <br>
+- How to combine all of the above into a final product <br>
